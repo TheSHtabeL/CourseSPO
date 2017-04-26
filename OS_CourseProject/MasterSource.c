@@ -4,8 +4,10 @@
 
 #include <Windows.h>
 #include <locale.h>
+#include "DataWork.h"
+#include "Interface.h"
 
-int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
-
+DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
+	
 	return 0;
 }
