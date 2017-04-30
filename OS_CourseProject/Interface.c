@@ -9,3 +9,7 @@ VOID CheckSpeed(HANDLE sharedMemory) {
 VOID ConsoleUserInterface() {
 	//Вывод информации о процессе обработки файла
 }
+
+DWORD GetCountOfThreads() {
+	return 0;
+}

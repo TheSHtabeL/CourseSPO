@@ -3,5 +3,6 @@
 
 VOID CheckSpeed(HANDLE);
 VOID ConsoleUserInterface();
+DWORD GetCountOfThreads();
 
 #endif
