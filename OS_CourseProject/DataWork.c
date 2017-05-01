@@ -2,10 +2,18 @@
 #include "DataWork.h"
 #include "Interface.h"
 
-BOOL AsyncReadFile(DWORD number) {
+VOID AsyncReadFile(DWORD BlockNumber) {
 	//Функция асинхронного чтения из файла
+	DWORD BufferNumber = BlockNumber;
+	extern CountOfOperations;
+	extern CountOfThreads;
+	extern HANDLE hReadFile;
 
-	return TRUE;
+	while (BlockNumber < CountOfOperations) {
+			
+
+		BlockNumber += CountOfThreads;
+	}
 }
 
 BOOL ReverseData(BYTE* data, DWORD bufferSize) {
@@ -13,7 +21,7 @@ BOOL ReverseData(BYTE* data, DWORD bufferSize) {
 	return TRUE;
 }
 
-BOOL AsyncWriteFile(BYTE* data, HANDLE sharedMemory) {
+VOID AsyncWriteFile(BYTE* data, HANDLE sharedMemory) {
 	//Функция записи информации в файл
 	return TRUE;
 }

@@ -5,20 +5,27 @@
 #include <Windows.h>
 #include <locale.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <conio.h>
 #include "DataWork.h"
 #include "Interface.h"
 
 /** Глобальные переменные**/
 DWORD CountOfThreads = 0;
+DWORD CountOfOperations = 0;
 DWORD BufferSize = 4;
+DWORD* WriteQueue;
+BOOL WritePermission = FALSE;
 BYTE* Buffer;
 CRITICAL_SECTION CriticalSection;
+HANDLE hReadFile;
+HANDLE hWriteFile;
+
+VOID FillBuffer(DWORD);
 
 DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	setlocale(LC_ALL, "Russian");
-	HANDLE hReadFile;
-	HANDLE hWriteFile;
+	struct stat FileInfo;
 
 	InitializeCriticalSection(&CriticalSection);
 	CountOfThreads = GetCountOfThreads();
@@ -40,9 +47,33 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 		CloseHandle(hReadFile);
 		return -1;
 	}
+	
+	stat("REPLACE", &FileInfo);
+	FillBuffer(FileInfo.st_size);
 
 	Buffer = malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
+	for (DWORD i = 0; i < CountOfThreads; i++) {
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncReadFile, i, 0, 0);
+	}
 
+	free(Buffer);
+	free(WriteQueue);
+	CloseHandle(hWriteFile);
+	CloseHandle(hReadFile);
 	_getch();
 	return 0;
+}
+
+VOID FillBuffer(DWORD FileSize) {
+	//Заполнение очереди инициализации контрольными значениями
+	DWORD CountOfOperations = FileSize / BufferSize;
+	if (FileSize % BufferSize) {
+		CountOfOperations++;
+	}
+
+	WriteQueue = malloc(sizeof(DWORD) * (CountOfOperations+1));
+	for (DWORD i = 0; i < CountOfOperations; i++) {
+		WriteQueue[i] = -1;
+	}
+	WriteQueue[CountOfOperations] = -2;
 }
