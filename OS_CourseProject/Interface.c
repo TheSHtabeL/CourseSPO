@@ -24,5 +24,5 @@ DWORD GetCountOfThreads() {
 		_getch();
 	}
 
-	return 0;
+	return count;
 }
