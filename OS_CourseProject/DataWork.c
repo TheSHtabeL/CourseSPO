@@ -2,8 +2,9 @@
 #include "DataWork.h"
 #include "Interface.h"
 
-BOOL AsyncReadFile() {
+BOOL AsyncReadFile(DWORD number) {
 	//Функция асинхронного чтения из файла
+
 	return TRUE;
 }
 

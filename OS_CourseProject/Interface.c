@@ -14,10 +14,10 @@ VOID ConsoleUserInterface() {
 
 DWORD GetCountOfThreads() {
 	DWORD count = 0;
-	CHAR value;
+	//CHAR value;
 	wprintf(L"Введите количество нитей, одновременно обрабатывающих файл: ");
 
-	while ( (!scanf_s("%d", &count)) != '\n' || (count <= 0) ) {
+	while ( (!scanf_s("%d", &count)) || (count <= 0) ) {
 		wprintf(L"\nПри вводе произошла ошибка. Попробуйте ещё раз.\n\n");
 		_flushall();
 		wprintf(L"Введите количество нитей, одновременно обрабатывающих файл: ");

@@ -11,7 +11,8 @@
 
 /** Глобальные переменные**/
 DWORD CountOfThreads = 0;
-BYTE* Buffer[];
+DWORD BufferSize = 4;
+BYTE* Buffer;
 CRITICAL_SECTION CriticalSection;
 
 DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
@@ -21,8 +22,8 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 
 	InitializeCriticalSection(&CriticalSection);
 	CountOfThreads = GetCountOfThreads();
-
-	/4/Открытие файлов
+	
+	//Открытие файлов
 	hReadFile = CreateFile("REPLACE.txt", GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
 	if (hReadFile == INVALID_HANDLE_VALUE) {
 		wprintf(L"Ошибка при открытии файла. Нажмите любую клавишу для продолжения...");
@@ -39,6 +40,8 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 		CloseHandle(hReadFile);
 		return -1;
 	}
+
+	Buffer = malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
 
 	_getch();
 	return 0;
