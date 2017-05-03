@@ -3,6 +3,6 @@
 
 VOID AsyncReadFile(DWORD);
 BOOL ReverseData(BYTE*, DWORD);
-VOID AsyncWriteFile(BYTE*, HANDLE);
+VOID AsyncWriteFile();
 
 #endif

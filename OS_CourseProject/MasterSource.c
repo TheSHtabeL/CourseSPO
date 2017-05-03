@@ -56,15 +56,16 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 		return -1;
 	}
 	
-	stat("REPLACE", &FileInfo);
+	stat("REPLACE.txt", &FileInfo);
 	FillQueue(FileInfo.st_size);
 
-	Buffer = malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
+	Buffer = (BYTE*)malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
 	for (DWORD i = 0; i < CountOfThreads; i++) {
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncReadFile, i, 0, 0);
 	}
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncWriteFile, NULL, 0, 0);
 
-	while (CountOfClosedThreads < CountOfThreads);
+	while (CountOfClosedThreads < (CountOfThreads+1));
 	wprintf(L"Работа программы завершена");
 	free(Buffer);
 	free(WriteQueue);
@@ -76,12 +77,12 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 
 VOID FillQueue(DWORD FileSize) {
 	//Заполнение очереди инициализации контрольными значениями
-	DWORD CountOfOperations = FileSize / BufferSize;
+	CountOfOperations = FileSize / BufferSize;
 	if (FileSize % BufferSize) {
 		CountOfOperations++;
 	}
 
-	WriteQueue = malloc(sizeof(DWORD) * (CountOfOperations+1));
+	WriteQueue = (DWORD*)malloc(sizeof(DWORD) * (CountOfOperations+1));
 	for (DWORD i = 0; i < CountOfOperations; i++) {
 		WriteQueue[i] = -1;
 	}
