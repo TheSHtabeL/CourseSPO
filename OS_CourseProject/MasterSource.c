@@ -13,22 +13,30 @@
 /** Глобальные переменные**/
 DWORD CountOfThreads = 0;
 DWORD CountOfOperations = 0;
+DWORD CountOfClosedThreads = 0;
 DWORD BufferSize = 4;
 DWORD* WriteQueue;
 BOOL WritePermission = FALSE;
 BYTE* Buffer;
 CRITICAL_SECTION CriticalSection;
+OVERLAPPED overlapped;
 HANDLE hReadFile;
 HANDLE hWriteFile;
 
-VOID FillBuffer(DWORD);
+VOID FillQueue(DWORD);
 
 DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	setlocale(LC_ALL, "Russian");
 	struct stat FileInfo;
+	HANDLE hEvent;
 
 	InitializeCriticalSection(&CriticalSection);
 	CountOfThreads = GetCountOfThreads();
+	
+	hEvent = CreateEvent(NULL, FALSE, TRUE, NULL); //Создание события с автоматическим сбросом
+	overlapped.hEvent = hEvent;
+	overlapped.Offset = 0;
+	overlapped.OffsetHigh = 0;
 	
 	//Открытие файлов
 	hReadFile = CreateFile("REPLACE.txt", GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
@@ -49,13 +57,15 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	}
 	
 	stat("REPLACE", &FileInfo);
-	FillBuffer(FileInfo.st_size);
+	FillQueue(FileInfo.st_size);
 
 	Buffer = malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
 	for (DWORD i = 0; i < CountOfThreads; i++) {
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncReadFile, i, 0, 0);
 	}
 
+	while (CountOfClosedThreads < CountOfThreads);
+	wprintf(L"Работа программы завершена");
 	free(Buffer);
 	free(WriteQueue);
 	CloseHandle(hWriteFile);
@@ -64,7 +74,7 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	return 0;
 }
 
-VOID FillBuffer(DWORD FileSize) {
+VOID FillQueue(DWORD FileSize) {
 	//Заполнение очереди инициализации контрольными значениями
 	DWORD CountOfOperations = FileSize / BufferSize;
 	if (FileSize % BufferSize) {
