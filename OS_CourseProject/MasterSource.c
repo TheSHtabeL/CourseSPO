@@ -9,6 +9,7 @@
 #include <conio.h>
 #include "DataWork.h"
 #include "Interface.h"
+#include "QueueDefinitions.h"
 
 /** Глобальные переменные**/
 DWORD CountOfThreads = 0;
@@ -84,7 +85,6 @@ VOID FillQueue(DWORD FileSize) {
 
 	WriteQueue = (DWORD*)malloc(sizeof(DWORD) * (CountOfOperations+1));
 	for (DWORD i = 0; i < CountOfOperations; i++) {
-		WriteQueue[i] = -1;
+		WriteQueue[i] = NOT_READY;
 	}
-	WriteQueue[CountOfOperations] = -2;
 }
