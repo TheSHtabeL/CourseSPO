@@ -85,6 +85,6 @@ VOID FillQueue(DWORD FileSize) {
 
 	WriteQueue = (DWORD*)malloc(sizeof(DWORD) * (CountOfOperations+1));
 	for (DWORD i = 0; i < CountOfOperations; i++) {
-		WriteQueue[i] = NOT_READY;
+		WriteQueue[i] = NO_IMPORTANT_INFORMATION;
 	}
 }

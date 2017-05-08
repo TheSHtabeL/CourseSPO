@@ -1,9 +1,6 @@
 #ifndef QUEUE_DEFINITIONS_H
 #define QUEUE_DEFINITIONS_H
 		
-#define LAST_BUFFER 2
-#define READY_FOR_WRITE_IN_FILE 1
-#define WROTEN_IN_FILE 0
-#define NOT_READY -1
+#define NO_IMPORTANT_INFORMATION 1
 
 #endif
