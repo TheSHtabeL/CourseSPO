@@ -37,9 +37,7 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 		BlockNumber += CountOfThreads;
 		while (BlockNumber < CountOfOperations) {
 			//Запись считанной информации в итоговый буфер
-			EnterCriticalSection(&CriticalSection);
 			memcpy(&Buffer[BufferNumber*BufferSize], previousBuffer, BufferSize);
-			LeaveCriticalSection(&CriticalSection);
 			//Чтение следующего блока
 			ReadFile(hReadFile, previousBuffer, BufferSize, NULL, &overlapped);
 			//Обработка информации
@@ -47,17 +45,21 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 			WriteQueue[BufferNumber] = BufferRead; //Уведомление записывающей нити о том, что запись в файл разрешена
 			if (!GetOverlappedResult(hReadFile, &overlapped, &BufferRead, TRUE)) {
 				//Ошибка чтения
+				EnterCriticalSection(&CriticalSection);
+				wprintf(L"Ошибка, ололо");
+				LeaveCriticalSection(&CriticalSection);
 			}
 			while (WriteQueue[BufferNumber] != NO_IMPORTANT_INFORMATION); //Ждём, когда содержимое буфера будет перенесено в файл
 			overlapped.Offset += (BufferSize*CountOfThreads);
 			BlockNumber += CountOfThreads;
 		}
 		//Обработка последнего считанного буфера
-		EnterCriticalSection(&CriticalSection);
 		memcpy(&Buffer[BufferNumber*BufferSize], previousBuffer, BufferSize);
-		LeaveCriticalSection(&CriticalSection);
 		ReverseData(&Buffer[BufferNumber*BufferSize], BufferRead);
 		WriteQueue[BufferNumber] = BufferRead; //Уведомление записывающей нити о том, что запись в файл разрешена
+		EnterCriticalSection(&CriticalSection);
+		wprintf(L"%d: %d\n", BufferNumber, BlockNumber);
+		LeaveCriticalSection(&CriticalSection);
 	}
 
 	free(previousBuffer);
@@ -69,6 +71,16 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 
 BOOL ReverseData(BYTE* data, DWORD bufferSize) {
 	//Функция обработки информации
+	BYTE temp;
+	DWORD count = bufferSize - 1; //Символ без пары не будет обрабатываться
+
+	EnterCriticalSection(&CriticalSection);
+	for (DWORD i = 0; i < count; i+=2) {
+		temp = data[i];
+		data[i] = data[i + 1];
+		data[i + 1] = temp;
+	}
+	LeaveCriticalSection(&CriticalSection);
 	return TRUE;
 }
 
@@ -94,6 +106,9 @@ VOID AsyncWriteFile() {
 
 	while (CountOfClosedThreads < (CountOfThreads) ) {
 		for (DWORD i = 0; i < CountOfThreads; i++) {
+			if (WriteQueue[i] == 1843) {
+				wprintf("");
+			}
 			if (WriteQueue[i] != NO_IMPORTANT_INFORMATION) {
 				ActiveBufferBlock = i;
 				SizeToWrite = WriteQueue[i];
@@ -116,6 +131,10 @@ VOID AsyncWriteFile() {
 			ActiveBufferBlock = -1;
 		}
 	}
+	for (int i = 0; i < CountOfThreads; i++) {
+		wprintf(L"\n%d", CountWrite[i]);
+	}
+
 	EnterCriticalSection(&CriticalSection);
 	CountOfClosedThreads++;
 	printf("Master closed\n");
