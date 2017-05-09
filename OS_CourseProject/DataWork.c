@@ -4,10 +4,12 @@
 #include "Interface.h"
 #include "QueueDefinitions.h"
 
+extern volatile DWORD TickPackets;
 extern DWORD CountOfOperations;
 extern DWORD CountOfThreads;
 extern DWORD BufferSize;
 extern DWORD CountOfClosedThreads;
+extern DWORD WriteFileSize;
 extern HANDLE hReadFile;
 extern HANDLE hWriteFile;
 extern BYTE* Buffer;
@@ -60,9 +62,6 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 		ReverseData(reverseBuffer, BufferRead);
 		memcpy(&Buffer[BufferNumber*BufferSize], reverseBuffer, BufferSize);
 		WriteQueue[BufferNumber] = BufferRead; //Уведомление записывающей нити о том, что запись в файл разрешена
-		EnterCriticalSection(&CriticalSection);
-		wprintf(L"%d: %d\n", BufferNumber, BlockNumber);
-		LeaveCriticalSection(&CriticalSection);
 	}
 
 	free(previousBuffer);
@@ -78,7 +77,7 @@ BOOL ReverseData(BYTE* data, DWORD bufferSize) {
 	BYTE temp;
 	DWORD count = bufferSize - 1; //Символ без пары не будет обрабатываться
 
-	for (DWORD i = 0; i < count; i+=2) {
+	for (DWORD i = 0; i < count; i+=2) { //Меняем местами нечётные и чётные байты
 		temp = data[i];
 		data[i] = data[i + 1];
 		data[i + 1] = temp;
@@ -109,9 +108,6 @@ VOID AsyncWriteFile() {
 
 	while (CountOfClosedThreads < (CountOfThreads) ) {
 		for (DWORD i = 0; i < CountOfThreads; i++) {
-			if (WriteQueue[i] == 1843) {
-				wprintf("");
-			}
 			if (WriteQueue[i] != NO_IMPORTANT_INFORMATION) {
 				ActiveBufferBlock = i;
 				SizeToWrite = WriteQueue[i];
@@ -129,6 +125,8 @@ VOID AsyncWriteFile() {
 				DWORD err = GetLastError();
 			}
 			
+			WriteFileSize += SizeToWrite;
+			TickPackets++;
 			CountWrite[ActiveBufferBlock]++;
 			WriteQueue[ActiveBufferBlock] = NO_IMPORTANT_INFORMATION;
 			ActiveBufferBlock = -1;

@@ -18,8 +18,10 @@ DWORD CountOfThreads = 0;
 DWORD CountOfOperations = 0;
 DWORD CountOfClosedThreads = 0;
 DWORD BufferSize = 131072;
+DWORD ReadFileSize;
+DWORD WriteFileSize = 0;
+volatile DWORD TickPackets = 0;
 DWORD* WriteQueue;
-BOOL WritePermission = FALSE;
 BYTE* Buffer;
 CRITICAL_SECTION CriticalSection;
 OVERLAPPED overlapped;
@@ -69,6 +71,7 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	
 	stat(ReadFileName, &FileInfo);
 	FillQueue(FileInfo.st_size);
+	ReadFileSize = FileInfo.st_size;
 
 	Buffer = (BYTE*)malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
 	//Создание нитей
@@ -76,6 +79,7 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncReadFile, i, 0, 0);
 	}
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncWriteFile, NULL, 0, 0);
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ConsoleUserInterface, NULL, 0, 0);
 
 	while (CountOfClosedThreads < (CountOfThreads+1));
 	EnterCriticalSection(&CriticalSection);
