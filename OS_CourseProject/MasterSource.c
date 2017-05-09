@@ -79,7 +79,6 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 
 	while (CountOfClosedThreads < (CountOfThreads+1));
 	EnterCriticalSection(&CriticalSection);
-	wprintf(L"Работа программы завершена");
 	LeaveCriticalSection(&CriticalSection);
 	free(Buffer);
 	free(WriteQueue);

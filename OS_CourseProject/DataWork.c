@@ -47,7 +47,7 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 			if (!GetOverlappedResult(hReadFile, &overlapped, &BufferRead, TRUE)) {
 				//Ошибка чтения
 				EnterCriticalSection(&CriticalSection);
-				wprintf(L"Ошибка, ололо");
+				//wprintf(L"Ошибка, ололо");
 				LeaveCriticalSection(&CriticalSection);
 			}
 			//Запись считанной информации во временный буфер
@@ -134,12 +134,8 @@ VOID AsyncWriteFile() {
 			ActiveBufferBlock = -1;
 		}
 	}
-	for (int i = 0; i < CountOfThreads; i++) {
-		wprintf(L"\n%d", CountWrite[i]);
-	}
 
 	EnterCriticalSection(&CriticalSection);
 	CountOfClosedThreads++;
-	printf("Master closed\n");
 	LeaveCriticalSection(&CriticalSection);
 }

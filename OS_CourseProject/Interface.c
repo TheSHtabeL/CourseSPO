@@ -13,4 +13,7 @@ VOID CheckSpeed() {
 
 VOID ConsoleUserInterface() {
 	//Вывод информации о процессе обработки файла
+	while (CountOfClosedThreads < (CountOfThreads + 1)) {
+		system("cls");
+	}
 }
