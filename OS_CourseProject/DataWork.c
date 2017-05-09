@@ -21,6 +21,7 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 	HANDLE hEvent;
 	OVERLAPPED overlapped;
 	BYTE* previousBuffer = (BYTE*)malloc(BufferSize * sizeof(BYTE));
+	BYTE* reverseBuffer = (BYTE*)malloc(BufferSize * sizeof(BYTE));
 
 	hEvent = CreateEvent(NULL, FALSE, TRUE, NULL); //Создание события с автоматическим сбросом
 	overlapped.hEvent = hEvent;
@@ -33,15 +34,15 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 		if (!GetOverlappedResult(hReadFile, &overlapped, &BufferRead, TRUE)) {
 			//Ошибка чтения
 		}
+		memcpy(reverseBuffer, previousBuffer, BufferSize);
 		overlapped.Offset += (BufferSize*CountOfThreads);
 		BlockNumber += CountOfThreads;
 		while (BlockNumber < CountOfOperations) {
-			//Запись считанной информации в итоговый буфер
-			memcpy(&Buffer[BufferNumber*BufferSize], previousBuffer, BufferSize);
 			//Чтение следующего блока
 			ReadFile(hReadFile, previousBuffer, BufferSize, NULL, &overlapped);
 			//Обработка информации
-			ReverseData(&Buffer[BufferNumber*BufferSize], BufferRead);
+			ReverseData(reverseBuffer, BufferSize);
+			memcpy(&Buffer[BufferNumber*BufferSize], reverseBuffer, BufferSize); //Передаём информацию в буфер для записи
 			WriteQueue[BufferNumber] = BufferRead; //Уведомление записывающей нити о том, что запись в файл разрешена
 			if (!GetOverlappedResult(hReadFile, &overlapped, &BufferRead, TRUE)) {
 				//Ошибка чтения
@@ -49,13 +50,15 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 				wprintf(L"Ошибка, ололо");
 				LeaveCriticalSection(&CriticalSection);
 			}
+			//Запись считанной информации во временный буфер
+			memcpy(reverseBuffer, previousBuffer, BufferSize);
 			while (WriteQueue[BufferNumber] != NO_IMPORTANT_INFORMATION); //Ждём, когда содержимое буфера будет перенесено в файл
 			overlapped.Offset += (BufferSize*CountOfThreads);
 			BlockNumber += CountOfThreads;
 		}
 		//Обработка последнего считанного буфера
-		memcpy(&Buffer[BufferNumber*BufferSize], previousBuffer, BufferSize);
-		ReverseData(&Buffer[BufferNumber*BufferSize], BufferRead);
+		ReverseData(reverseBuffer, BufferRead);
+		memcpy(&Buffer[BufferNumber*BufferSize], reverseBuffer, BufferSize);
 		WriteQueue[BufferNumber] = BufferRead; //Уведомление записывающей нити о том, что запись в файл разрешена
 		EnterCriticalSection(&CriticalSection);
 		wprintf(L"%d: %d\n", BufferNumber, BlockNumber);
@@ -63,6 +66,7 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 	}
 
 	free(previousBuffer);
+	free(reverseBuffer);
 	//Сигнал о том, что нить отработала
 	EnterCriticalSection(&CriticalSection);
 	CountOfClosedThreads++;
@@ -74,13 +78,12 @@ BOOL ReverseData(BYTE* data, DWORD bufferSize) {
 	BYTE temp;
 	DWORD count = bufferSize - 1; //Символ без пары не будет обрабатываться
 
-	EnterCriticalSection(&CriticalSection);
 	for (DWORD i = 0; i < count; i+=2) {
 		temp = data[i];
 		data[i] = data[i + 1];
 		data[i + 1] = temp;
 	}
-	LeaveCriticalSection(&CriticalSection);
+
 	return TRUE;
 }
 

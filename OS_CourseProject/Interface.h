@@ -1,7 +1,7 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
-VOID CheckSpeed(HANDLE);
+VOID CheckSpeed();
 VOID ConsoleUserInterface();
 DWORD GetCountOfThreads();
 
