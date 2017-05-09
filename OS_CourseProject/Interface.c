@@ -25,8 +25,13 @@ VOID ConsoleUserInterface() {
 	DWORD Percent = 0;
 	DOUBLE Speed = 0.00f;
 	DOUBLE TempSpeed = 0.00f;
+	HANDLE hConsole;
+	COORD OutputCoordinates = { 0, 1 };
 
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	StartTime = GetTickCount();
+	system("cls");
+	wprintf(L"/*-- Ход выполнения копирования: --*/\n");
 	while (CountOfClosedThreads < (CountOfThreads + 1)) {
 		TempSpeed = CheckSpeed();
 
@@ -48,13 +53,13 @@ VOID ConsoleUserInterface() {
 			Sec -= 60;
 		}
 
-		system("cls");
-		wprintf(L"/*-- Ход выполнения копирования: --*/\n");
+		SetConsoleCursorPosition(hConsole, OutputCoordinates);
 		wprintf(L"Процент выполнения: %d%%\n", Percent);
-		wprintf(L"Текущая скорость копирования: %.2f Мб/сек\n", Speed);
-		wprintf(L"Время выполнения копирования: %d мин, %d сек", Min, Sec);
+		wprintf(L"Текущая скорость копирования: %.2f Мб/сек   \n", Speed);
+		wprintf(L"Время выполнения копирования: %d мин, %d сек   ", Min, Sec);
 	}
 	wprintf(L"\nКопирование завершено. Нажмите любую клавишу для выхода из программы...");
+	CloseHandle(hConsole);
 }
 
 DWORD GetPercent() {
