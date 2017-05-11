@@ -14,7 +14,7 @@
 #include "QueueDefinitions.h"
 
 /** Глобальные переменные**/
-DWORD CountOfThreads = 0;
+DWORD CountOfThreads = 0; //Количество читающих нитей (без учёта пишущей)
 DWORD CountOfOperations = 0;
 DWORD CountOfClosedThreads = 0;
 DWORD BufferSize = 131072;

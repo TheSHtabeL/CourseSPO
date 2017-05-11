@@ -26,15 +26,15 @@ VOID ConsoleUserInterface() {
 	DOUBLE Speed = 0.00f;
 	DOUBLE TempSpeed = 0.00f;
 	HANDLE hConsole;
-	COORD OutputCoordinates = { 0, 1 };
+	COORD OutputCoordinates = { 0, 1 }; //x = 0, y = 0 - Координаты второй строки в консоли
 
-	hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	hConsole = GetStdHandle(STD_OUTPUT_HANDLE); //Получаем дескриптор консоли для установки позиции печати вручную
 	StartTime = GetTickCount();
 	system("cls");
 	wprintf(L"/*-- Ход выполнения копирования: --*/\n");
-	while (CountOfClosedThreads < (CountOfThreads + 1)) {
-		TempSpeed = CheckSpeed();
 
+	while (CountOfClosedThreads < (CountOfThreads + 1)) { //Ожидаем закрытия всех дочерних нитей
+		TempSpeed = CheckSpeed();
 		if (TempSpeed != (-1)) {
 			Speed = TempSpeed;
 		}
@@ -44,6 +44,7 @@ VOID ConsoleUserInterface() {
 			PrevPercent = Percent;
 		}
 
+		//Получаем прошедшее с начала копирования время
 		TempTime = GetTickCount() - StartTime;
 		TempTime /= ONE_SECOND;
 		Min = 0;
@@ -53,16 +54,19 @@ VOID ConsoleUserInterface() {
 			Sec -= 60;
 		}
 
-		SetConsoleCursorPosition(hConsole, OutputCoordinates);
+		//Заменяем находящийся в консоли текст
+		SetConsoleCursorPosition(hConsole, OutputCoordinates); 
 		wprintf(L"Процент выполнения: %d%%\n", Percent);
 		wprintf(L"Текущая скорость копирования: %.2f Мб/сек   \n", Speed);
 		wprintf(L"Время выполнения копирования: %d мин, %d сек   ", Min, Sec);
 	}
+
 	wprintf(L"\nКопирование завершено. Нажмите любую клавишу для выхода из программы...");
 	CloseHandle(hConsole);
 }
 
 DWORD GetPercent() {
+	//Функция возвращает процент завершения процесса копирования файла
 	return WriteFileSize / (ReadFileSize / 100);
 }
 
@@ -75,7 +79,7 @@ DOUBLE CheckSpeed() {
 
 	if (TickTime > ONE_SECOND) {
 		PrevTime = CurrentTime;
-		Speed = BufferSize * TickPackets / 1000000.00;
+		Speed = BufferSize * TickPackets / 1000000.00; //Перевод в Мбайт/сек
 		TickPackets = 0;
 		return Speed;
 	}
