@@ -72,7 +72,7 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 	LeaveCriticalSection(&CriticalSection);
 }
 
-BOOL ReverseData(BYTE* data, DWORD bufferSize) {
+VOID ReverseData(BYTE* data, DWORD bufferSize) {
 	//Функция обработки информации
 	BYTE temp;
 	DWORD count = bufferSize - 1; //Символ без пары не будет обрабатываться
@@ -83,7 +83,6 @@ BOOL ReverseData(BYTE* data, DWORD bufferSize) {
 		data[i + 1] = temp;
 	}
 
-	return TRUE;
 }
 
 VOID AsyncWriteFile() {
