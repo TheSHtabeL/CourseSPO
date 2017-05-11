@@ -37,8 +37,8 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	TCHAR ReadFileName[50];
 	TCHAR WriteFileName[50];
 
+	//Заполнение глобальных переменных
 	InitializeCriticalSection(&CriticalSection);
-	//CountOfThreads = GetCountOfThreads();
 	
 	hEvent = CreateEvent(NULL, FALSE, TRUE, NULL); //Создание события с автоматическим сбросом
 	overlapped.hEvent = hEvent;
@@ -46,17 +46,33 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	overlapped.OffsetHigh = 0;
 	
 	wprintf(L"Введите количество нитей: ");
-	scanf("%d", &CountOfThreads);
+	if (!scanf("%d", &CountOfThreads)){
+		wprintf(L"Произошла ошибка. Нажмите любую клавишу для выхода из программы...");
+		_getch();
+		CloseHandle(hEvent);
+		return -1;
+	}
 	wprintf(L"Введите имя файла для чтения: ");
-	scanf("%s", ReadFileName);
+	if (!scanf("%s", ReadFileName)){
+		wprintf(L"Произошла ошибка. Нажмите любую клавишу для выхода из программы...");
+		_getch();
+		CloseHandle(hEvent);
+		return -1;
+	}
 	wprintf(L"Введите имя файла для записи: ");
-	scanf("%s", WriteFileName);
+	if(!scanf("%s", WriteFileName)){
+		wprintf(L"Произошла ошибка. Нажмите любую клавишу для выхода из программы...");
+		_getch();
+		CloseHandle(hEvent);
+		return -1;
+	}
 	//Открытие файлов
 	hReadFile = CreateFile(ReadFileName, GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
 	if (hReadFile == INVALID_HANDLE_VALUE) {
 		wprintf(L"Ошибка при открытии файла. Нажмите любую клавишу для продолжения...");
 		_getch();
 		CloseHandle(hReadFile);
+		CloseHandle(hEvent);
 		return -1;
 	}
 	
@@ -66,9 +82,11 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 		_getch();
 		CloseHandle(hWriteFile);
 		CloseHandle(hReadFile);
+		CloseHandle(hEvent);
 		return -1;
 	}	
 	
+	//Получаем размер файла
 	stat(ReadFileName, &FileInfo);
 	FillQueue(FileInfo.st_size);
 	ReadFileSize = FileInfo.st_size;
@@ -76,18 +94,17 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	Buffer = (BYTE*)malloc(BufferSize * CountOfThreads * sizeof(BYTE)); //Выделение буферов для всех нитей
 	//Создание нитей
 	for (DWORD i = 0; i < CountOfThreads; i++) {
-		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncReadFile, i, 0, 0);
+		CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncReadFile, i, 0, 0); //Дочерние нити чтения
 	}
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncWriteFile, NULL, 0, 0);
-	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ConsoleUserInterface, NULL, 0, 0);
-
-	while (CountOfClosedThreads < (CountOfThreads+1));
-	EnterCriticalSection(&CriticalSection);
-	LeaveCriticalSection(&CriticalSection);
+	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncWriteFile, NULL, 0, 0); //Дочерняя нить записи
+	ConsoleUserInterface(); //Вывод информации о процессе копирования файла на экран
+	
+	//Очистка буферов и закрытие открытых дескрипторов
 	free(Buffer);
 	free(WriteQueue);
 	CloseHandle(hWriteFile);
 	CloseHandle(hReadFile);
+	CloseHandle(hEvent);
 	_getch();
 	return 0;
 }
@@ -97,12 +114,13 @@ VOID FillQueue(DWORD FileSize) {
 	CountOfOperations = FileSize / BufferSize;
 	DWORD Test;
 	if (FileSize % BufferSize) {
-		CountOfOperations++;
+		CountOfOperations++; //Вычисление количества операций по чтению буферов из файла
 	}
 
+	//Каждой нити отводится DWORD в глобальной области, через который происходит синхронизация
+	//между читающими и пишущей нитями
 	WriteQueue = (DWORD*)malloc(sizeof(DWORD) * (CountOfThreads+1));
 	for (DWORD i = 0; i < CountOfThreads; i++) {
 		WriteQueue[i] = NO_IMPORTANT_INFORMATION;
-		Test = WriteQueue[i];
 	}
 }
