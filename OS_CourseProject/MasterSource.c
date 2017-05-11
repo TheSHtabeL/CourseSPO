@@ -22,6 +22,7 @@ volatile DWORD TickPackets = 0;
 DWORD* WriteQueue;
 BYTE* Buffer;
 CRITICAL_SECTION CriticalSection;
+CRITICAL_SECTION CriticalSectionConsole;
 OVERLAPPED overlapped;
 HANDLE hReadFile;
 HANDLE hWriteFile;
@@ -37,6 +38,7 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 
 	//Заполнение глобальных переменных
 	InitializeCriticalSection(&CriticalSection);
+	InitializeCriticalSection(&CriticalSectionConsole);
 	
 	hEvent = CreateEvent(NULL, FALSE, TRUE, NULL); //Создание события с автоматическим сбросом
 	overlapped.hEvent = hEvent;

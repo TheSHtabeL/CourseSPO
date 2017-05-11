@@ -26,10 +26,11 @@ VOID ConsoleUserInterface() {
 	DOUBLE Speed = 0.00f;
 	DOUBLE TempSpeed = 0.00f;
 	HANDLE hConsole;
-	COORD OutputCoordinates = { 0, 1 }; //x = 0, y = 0 - Координаты второй строки в консоли
+	COORD OutputCoordinates = { 0, 1 }; //x = 0, y = 1 - Координаты второй строки в консоли
 
 	hConsole = GetStdHandle(STD_OUTPUT_HANDLE); //Получаем дескриптор консоли для установки позиции печати вручную
 	StartTime = GetTickCount();
+
 	system("cls");
 	wprintf(L"/*-- Ход выполнения копирования: --*/\n");
 
@@ -55,7 +56,7 @@ VOID ConsoleUserInterface() {
 		}
 
 		//Заменяем находящийся в консоли текст
-		SetConsoleCursorPosition(hConsole, OutputCoordinates); 
+		SetConsoleCursorPosition(hConsole, OutputCoordinates);
 		wprintf(L"Процент выполнения: %d%%\n", Percent);
 		wprintf(L"Текущая скорость копирования: %.2f Мб/сек   \n", Speed);
 		wprintf(L"Время выполнения копирования: %d мин, %d сек   ", Min, Sec);

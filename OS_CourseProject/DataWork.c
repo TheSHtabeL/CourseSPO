@@ -15,6 +15,8 @@ extern HANDLE hWriteFile;
 extern BYTE* Buffer;
 extern DWORD* WriteQueue;
 extern CRITICAL_SECTION CriticalSection;
+//extern CRITICAL_SECTION CriticalSectionConsole;
+
 
 VOID AsyncReadFile(DWORD BlockNumber) {
 	//Функция асинхронного чтения из файла
@@ -24,6 +26,9 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 	OVERLAPPED overlapped;
 	BYTE* previousBuffer = (BYTE*)malloc(BufferSize * sizeof(BYTE));
 	BYTE* reverseBuffer = (BYTE*)malloc(BufferSize * sizeof(BYTE));
+	//Переменные, используемые только в случае ошибки
+	HANDLE hConsole;
+	COORD OutputCoordinates = { 0, 5 }; //x = 0, y = 5 - Координаты шестой строки в консоли
 
 	hEvent = CreateEvent(NULL, FALSE, TRUE, NULL); //Создание события с автоматическим сбросом
 	overlapped.hEvent = hEvent;
@@ -42,16 +47,21 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 		while (BlockNumber < CountOfOperations) {
 			//Чтение следующего блока
 			ReadFile(hReadFile, previousBuffer, BufferSize, NULL, &overlapped);
+
 			//Обработка информации
 			ReverseData(reverseBuffer, BufferSize);
 			memcpy(&Buffer[BufferNumber*BufferSize], reverseBuffer, BufferSize); //Передаём информацию в буфер для записи
 			WriteQueue[BufferNumber] = BufferRead; //Уведомление записывающей нити о том, что запись в файл разрешена
+
 			if (!GetOverlappedResult(hReadFile, &overlapped, &BufferRead, TRUE)) {
 				//Ошибка чтения
-				EnterCriticalSection(&CriticalSection);
-				//wprintf(L"Ошибка, ололо");
-				LeaveCriticalSection(&CriticalSection);
+				CountOfClosedThreads++;
+				free(Buffer);
+				free(previousBuffer);
+				CloseHandle(hEvent);
+				return;
 			}
+
 			//Запись считанной информации во временный буфер
 			memcpy(reverseBuffer, previousBuffer, BufferSize);
 			while (WriteQueue[BufferNumber] != NO_IMPORTANT_INFORMATION); //Ждём, когда содержимое буфера будет перенесено в файл
@@ -66,6 +76,7 @@ VOID AsyncReadFile(DWORD BlockNumber) {
 
 	free(previousBuffer);
 	free(reverseBuffer);
+
 	//Сигнал о том, что нить отработала
 	EnterCriticalSection(&CriticalSection);
 	CountOfClosedThreads++;
@@ -107,26 +118,22 @@ VOID AsyncWriteFile() {
 
 	while (CountOfClosedThreads < (CountOfThreads) ) {
 		for (DWORD i = 0; i < CountOfThreads; i++) {
-			if (WriteQueue[i] != NO_IMPORTANT_INFORMATION) {
+			if (WriteQueue[i] != NO_IMPORTANT_INFORMATION) { //Ищем буфер, в который читающая нить записал блок информации
 				ActiveBufferBlock = i;
 				SizeToWrite = WriteQueue[i];
 				break;
 			}
 		}
 
-		if (ActiveBufferBlock != (-1)) {
+		if (ActiveBufferBlock != (-1)) { //Проверяем, найдена ли информация в буфере
 			DWORD OffsetInsideBlock = ActiveBufferBlock * BufferSize;
 			DWORD OffsetBeginFile = CountOfThreads * BufferSize * CountWrite[ActiveBufferBlock];
-			overlapped.Offset = OffsetInsideBlock + OffsetBeginFile;
+			overlapped.Offset = OffsetInsideBlock + OffsetBeginFile; //Смещение на место, в который нужно вписать информацию
 			
-			Result = WriteFile(hWriteFile, Buffer + OffsetInsideBlock, SizeToWrite, NULL, &overlapped);
-			if (!Result) {
-				DWORD err = GetLastError();
-			}
-			
+			WriteFile(hWriteFile, Buffer + OffsetInsideBlock, SizeToWrite, NULL, &overlapped);			
 			WriteFileSize += SizeToWrite;
-			TickPackets++;
-			CountWrite[ActiveBufferBlock]++;
+			TickPackets++; //Количество записанных буферов (периодически переменная очищается)
+			CountWrite[ActiveBufferBlock]++; //Индивидуальные счётчики читающих нитей
 			WriteQueue[ActiveBufferBlock] = NO_IMPORTANT_INFORMATION;
 			ActiveBufferBlock = -1;
 		}
