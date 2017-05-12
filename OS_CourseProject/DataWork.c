@@ -15,8 +15,6 @@ extern HANDLE hWriteFile;
 extern BYTE* Buffer;
 extern DWORD* WriteQueue;
 extern CRITICAL_SECTION CriticalSection;
-//extern CRITICAL_SECTION CriticalSectionConsole;
-
 
 VOID AsyncReadFile(DWORD BlockNumber) {
 	//Функция асинхронного чтения из файла
