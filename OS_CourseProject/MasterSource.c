@@ -98,7 +98,7 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 	}
 	CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)AsyncWriteFile, NULL, 0, 0); //Дочерняя нить записи
 	ConsoleUserInterface(); //Вывод информации о процессе копирования файла на экран
-	
+
 	//Очистка буферов и закрытие открытых дескрипторов
 	free(Buffer);
 	free(WriteQueue);
