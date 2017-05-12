@@ -67,7 +67,7 @@ DWORD wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
 		return -1;
 	}
 	//Открытие файлов
-	hReadFile = CreateFile(ReadFileName, GENERIC_READ, 0, NULL, OPEN_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
+	hReadFile = CreateFile(ReadFileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
 	if (hReadFile == INVALID_HANDLE_VALUE) {
 		wprintf(L"Ошибка при открытии файла. Нажмите любую клавишу для продолжения...");
 		_getch();
